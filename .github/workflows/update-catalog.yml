@@ -1,0 +1,75 @@
+
+name: Actualizar catalogo AceStream
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actualizar-catalogo
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests beautifulsoup4
+
+      - name: Extraer eventos AceStream
+        run: |
+          python scraper.py \
+            --output catalog.json \
+            --max-events 100
+
+      - name: Validar catalogo
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("catalog.json")
+
+          if not path.exists():
+              raise SystemExit("No existe catalog.json")
+
+          data = json.loads(path.read_text(encoding="utf-8"))
+
+          if not isinstance(data, list):
+              raise SystemExit("El catalogo no es una lista")
+
+          print("Eventos en catalogo:", len(data))
+          PY
+
+      - name: Guardar catalogo actualizado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add catalog.json
+
+          if git diff --cached --quiet; then
+            echo "No hay cambios en catalog.json"
+          else
+            git commit -m "Actualizar catalogo AceStream"
+            git push
+          fi
