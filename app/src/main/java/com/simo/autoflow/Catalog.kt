@@ -25,8 +25,8 @@ object Config {
 
     // URL del catalogo actualizado por GitHub Actions
     const val CATALOG_URL =
-        "https://raw.githubusercontent.com/Atzucar/ClaudioTV/main/catalog.json"
-
+        "https://raw.githubusercontent.com/Atzucar/ClaudioTV2/main/catalog.json"
+    
     const val STEP_TIMEOUT_MS = 20_000L
     const val VPN_TIMEOUT_MS = 60_000L
 }
