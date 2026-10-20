@@ -10,7 +10,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-BASE_URL = "https://livetv905.me"
+BASE_URL = "https://livetv.sx"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
@@ -18,7 +18,7 @@ HEADERS = {
 }
 
 EVENT_RE = re.compile(
-    r"/(?:es/)?eventinfo/(\d+)(?:/|$)",
+    r"/(?:es/)?eventinfo/(\d+)(?:_[^/?#]*)?(?:/|$)",
     re.IGNORECASE
 )
 
@@ -130,7 +130,7 @@ def build_catalog(base_url, max_events=100):
 
         listing_url = urljoin(
             base_url.rstrip("/") + "/",
-            "es/allupcoming/"
+            "es/"
         )
 
         response = session.get(listing_url, timeout=25)
