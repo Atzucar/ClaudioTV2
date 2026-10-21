@@ -11,5 +11,31 @@
         "quality": null
       }
     ]
+  },
+  {
+    "id": "503245470",
+    "title": "Vasco de Gama – Boca Juniors",
+    "type": "evento",
+    "time": "",
+    "links": [
+      {
+        "name": "AceStream 1",
+        "url": "acestream://92b6ba09dae4bbb8a67a405125d08ca8d15380ee",
+        "quality": null
+      }
+    ]
+  },
+  {
+    "id": "503457915",
+    "title": "San Antonio – Oklahoma",
+    "type": "evento",
+    "time": "",
+    "links": [
+      {
+        "name": "AceStream 1",
+        "url": "acestream://eab7aeef0218ce8b0752e596e4792b69eda4df5e",
+        "quality": null
+      }
+    ]
   }
 ]
