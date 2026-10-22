@@ -28,7 +28,7 @@ class ProgressActivity : Activity() {
     override fun onResume() { super.onResume(); FlowService.onChange = { runOnUiThread { render() } }; render() }
     override fun onPause() { super.onPause(); FlowService.onChange = null }
 
-    override fun onBackPressed() { FlowService.instance?.cancel(); super.onBackPressed() }
+    override fun onBackPressed() { FlowService.instance?.cancel(); FlowService.instance?.sendMediaStop(); super.onBackPressed() }
 
     private fun render() {
         val st = FlowService.steps

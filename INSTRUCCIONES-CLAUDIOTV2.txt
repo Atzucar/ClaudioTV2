@@ -1,0 +1,29 @@
+CLAUDIOTV2 - portada de tarjetas grandes + salida experimental
+
+PARA ACTUALIZAR EL REPOSITORIO ACTUAL:
+1. Mantener el repositorio existente (especialmente catalog.json, scraper.py y Config.kt).
+2. Sustituir los archivos de este paquete por ruta, conservando la jerarquia.
+3. GitHub > Actions > Build APK. Si se compila, instalar APK en Fire TV Stick.
+
+NUEVA PORTADA:
+- Cinco grandes tarjetas horizontales con imagen ilustrativa de fondo por deporte.
+- Categorias y navegación con mando. Eventos adicionales en lista.
+- El titulo, hora y numero de enlaces provienen del JSON, no de la maqueta.
+- Las imagenes son genericas/ilustrativas, no fotografias verificadas de partidos.
+- Logo pequeño en la esquina superior izquierda.
+
+ACESTREAM / PROTON VPN:
+- El servicio de accesibilidad intenta enviar STOP cuando se abandona Ace Stream.
+- Si detecta regreso a ClaudioTV o a Fire TV launcher, intenta abrir Proton VPN y
+  pulsar 'Desconectar', tras lo cual vuelve a ClaudioTV o Home.
+- Limitacion: HOME no siempre se notifica al servicio. La desconexion no es garantizada,
+  depende de nombres/textos y permisos de accesibilidad. Puede abrir Proton temporalmente.
+- Verificar siempre en ProtonVPN si la conexion a Rusia se desconecto realmente.
+- La parada no equivale a forzar cierre de Ace Stream Media.
+
+PRUEBAS RECOMENDADAS:
+- Tarjetas enfoque/OK, categorias, recargar y enlaces en Fire TV.
+- Reproducir evento, pulsar Atras, confirmar cierre del sonido y VPN.
+- Reproducir evento, pulsar Home, confirmar sonido y VPN; documentar fallos.
+
+No se ha validado compilacion ni ejecutado pruebas en un Fire TV fisico.

@@ -1,4 +1,3 @@
-
 package com.simo.autoflow
 
 import android.content.Context
@@ -8,173 +7,87 @@ import org.json.JSONTokener
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class Link(
-    val name: String,
-    val url: String,
-    val quality: String?,
-    val peers: Int?
-)
-
-data class Item(
-    val title: String,
-    val type: String,
-    val time: String?,
-    val links: List<Link>
-)
-
-data class CatalogResult(
-    val items: List<Item>,
-    val warning: String?,
-    val source: String
-)
+data class Link(val name: String, val url: String, val quality: String?, val peers: Int?)
+data class Item(val title: String, val type: String, val time: String?, val links: List<Link>, val category: String = "")
+data class CatalogResult(val items: List<Item>, val warning: String?, val source: String)
 
 object Catalog {
-
     fun load(ctx: Context): CatalogResult {
-
-        fun bundled(): List<Item> = try {
-            val text = ctx.assets.open("catalog.json")
-                .bufferedReader()
-                .use { it.readText() }
-
-            parseJson(text)
+        fun bundled() = try {
+            parseJson(ctx.assets.open("catalog.json").bufferedReader().readText())
         } catch (e: Exception) {
             emptyList()
         }
 
         if (Config.CATALOG_URL.isBlank()) {
-            return CatalogResult(
-                bundled(),
-                "No hay URL de catalogo configurada",
-                "ejemplo"
-            )
+            return CatalogResult(bundled(), "No hay CATALOG_URL configurada.", "ejemplo")
         }
 
         return try {
-            val conn = URL(
-                Config.CATALOG_URL +
-                    "?t=" + System.currentTimeMillis()
-            ).openConnection() as HttpURLConnection
-
+            val conn = URL(Config.CATALOG_URL + "?t=" + System.currentTimeMillis()).openConnection() as HttpURLConnection
             conn.connectTimeout = 8000
             conn.readTimeout = 8000
             conn.useCaches = false
-
-            try {
-                if (conn.responseCode != 200) {
-                    error("HTTP ${conn.responseCode}")
-                }
-
-                val text = conn.inputStream
-                    .bufferedReader()
-                    .use { it.readText() }
-
-                val items = parseJson(text)
-
-                CatalogResult(
-                    items,
-                    if (items.isEmpty())
-                        "No hay eventos AceStream disponibles"
-                    else null,
-                    "online"
-                )
-            } finally {
-                conn.disconnect()
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Android TV) Gecko/120.0")
+            
+            if (conn.responseCode != 200) error("HTTP ${conn.responseCode}")
+            
+            val rawText = conn.inputStream.bufferedReader().use { it.readText() }
+            val itemsList = parseJson(rawText)
+            
+            if (itemsList.isEmpty()) {
+                CatalogResult(bundled(), "El archivo online no contiene eventos válidos.", "online")
+            } else {
+                CatalogResult(itemsList, null, "online")
             }
-
         } catch (e: Exception) {
-            CatalogResult(
-                bundled(),
-                "Error de catalogo: ${e.message}",
-                "ejemplo"
-            )
+            CatalogResult(bundled(), "Error de red: ${e.message}", "ejemplo")
         }
     }
 
     private fun parseJson(text: String): List<Item> {
-
+        // No asumir que todos los registros del proveedor tienen la misma estructura.
         val root = JSONTokener(text.trim()).nextValue()
-
-        val events = when (root) {
+        val array = when (root) {
             is JSONArray -> root
-            is JSONObject -> {
-                root.optJSONArray("events")
-                    ?: root.optJSONArray("items")
-                    ?: return emptyList()
+            is JSONObject -> when {
+                root.opt("events") is JSONArray -> root.getJSONArray("events")
+                root.opt("items") is JSONArray -> root.getJSONArray("items")
+                else -> return emptyList()
             }
             else -> return emptyList()
         }
-
         val result = mutableListOf<Item>()
-
-        val acePattern = Regex(
-            "^acestream://[a-fA-F0-9]{40}$",
-            RegexOption.IGNORE_CASE
-        )
-
-        for (i in 0 until events.length()) {
-
-            val event = events.optJSONObject(i)
-                ?: continue
-
-            val title = event.optString("title")
-                .ifBlank { event.optString("name") }
-                .trim()
-
+        val seen = mutableSetOf<String>()
+        val acePattern = Regex("^acestream://[a-fA-F0-9]{40}$", RegexOption.IGNORE_CASE)
+        for (i in 0 until array.length()) {
+            val event = array.optJSONObject(i) ?: continue
+            val title = event.optString("title").ifBlank {
+                event.optString("name")
+            }.trim()
             if (title.isBlank()) continue
 
-            val entries = event.optJSONArray("links")
-                ?: event.optJSONArray("channels")
-                ?: continue
-
-            val links = mutableListOf<Link>()
-            val seen = mutableSetOf<String>()
-
-            for (j in 0 until entries.length()) {
-
-                val entry = entries.optJSONObject(j)
-
-                val rawUrl = if (entry != null) {
-                    entry.optString("url")
-                } else {
-                    entries.optString(j)
-                }
-
-                val aceUrl = rawUrl.trim()
-
-                if (!acePattern.matches(aceUrl)) continue
-                if (!seen.add(aceUrl.lowercase())) continue
-
-                links.add(
-                    Link(
-                        name = entry?.optString("name")
-                            ?.takeIf { it.isNotBlank() }
-                            ?: "AceStream ${j + 1}",
-                        url = aceUrl,
-                        quality = entry?.optString("quality")
-                            ?.takeIf { it.isNotBlank() },
-                        peers = if (
-                            entry != null &&
-                            !entry.isNull("peers")
-                        ) entry.optInt("peers")
-                        else null
-                    )
-                )
+            val links = when {
+                event.opt("links") is JSONArray -> event.optJSONArray("links")
+                event.opt("channels") is JSONArray -> event.optJSONArray("channels")
+                else -> null
+            } ?: continue
+            val validLinks = mutableListOf<Link>()
+            for (j in 0 until links.length()) {
+                val entry = links.optJSONObject(j)
+                val rawUrl = entry?.optString("url") ?: links.optString(j)
+                val normalized = rawUrl.trim()
+                if (!acePattern.matches(normalized) || !seen.add("$title|$normalized")) continue
+                validLinks.add(Link(
+                    entry?.optString("name")?.takeIf { it.isNotBlank() } ?: "Canal ${j + 1}",
+                    normalized,
+                    entry?.optString("quality"),
+                    if (entry?.has("peers") == true) entry.optInt("peers") else null
+                ))
             }
-
-            if (links.isEmpty()) continue
-
-            result.add(
-                Item(
-                    title = title,
-                    type = event.optString("type", "evento"),
-                    time = event.optString("time"),
-                    links = links
-                )
-            )
+            if (validLinks.isEmpty()) continue
+            result.add(Item(title, "evento", event.optString("time"), validLinks, event.optString("category", "")))
         }
-
         return result
     }
 }
-

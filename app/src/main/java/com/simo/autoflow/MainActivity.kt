@@ -2,13 +2,17 @@ package com.simo.autoflow
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import android.view.View
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -16,142 +20,158 @@ import kotlin.concurrent.thread
 
 object Session { var items: List<Item> = emptyList() }
 
-/** Pantalla 1: qué quieres ver, con filtros Todo / Eventos / Películas. */
+/** Portada visual para Fire TV: tarjetas grandes y navegacion con el mando. */
 class MainActivity : Activity() {
-    private lateinit var list: LinearLayout
-    private lateinit var chipsRow: LinearLayout
-    private lateinit var accChip: TextView
-    private lateinit var vpnChip: TextView
-    private lateinit var pTitle: TextView
-    private lateinit var pCount: TextView
+    private lateinit var chips: LinearLayout
+    private lateinit var highlights: LinearLayout
+    private lateinit var secondary: LinearLayout
     private lateinit var updated: TextView
-    private lateinit var warn: TextView
-    private var filter = "all"
+    private lateinit var notice: TextView
+    private var filter = "Todo"
     private var firstLoad = true
 
-    override fun onCreate(b: Bundle?) {
-        super.onCreate(b)
-        val c = this
-        val root = LinearLayout(c).apply { 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Ui.BG)
-            setPadding(Ui.dp(c, 48), Ui.dp(c, 32), Ui.dp(c, 48), Ui.dp(c, 24)) 
+            setBackgroundColor(0xFF06111F.toInt())
+            setPadding(Ui.dp(this@MainActivity, 30), Ui.dp(this@MainActivity, 16), Ui.dp(this@MainActivity, 30), Ui.dp(this@MainActivity, 12))
         }
+        val header = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        header.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_launcher)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }, Ui.lp(Ui.dp(this, 42), Ui.dp(this, 42), r = Ui.dp(this, 10)))
+        val brand = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        brand.addView(Ui.tv(this, "ClaudioTV", 23f, Ui.TEXT, true))
+        brand.addView(Ui.tv(this, "DEPORTE EN DIRECTO  ·  ACESTREAM", 9f, Ui.SOFT))
+        header.addView(brand, Ui.lp(0, -2, 1f))
+        header.addView(filterChip(this, "↻  Recargar", false) { refresh() })
+        root.addView(header, Ui.lp(-1, -2, b = Ui.dp(this, 12)))
 
-        // cabecera
-        val header = LinearLayout(c).apply { gravity = Gravity.CENTER_VERTICAL }
-        header.addView(Ui.tv(c, "▶", 14f, Ui.WHITE, true).apply { 
-            gravity = Gravity.CENTER
-            background = Ui.rounded(c, Ui.ACCENT, 8) 
-        }, Ui.lp(Ui.dp(c, 28), Ui.dp(c, 28), r = Ui.dp(c, 10)))
-        
-        header.addView(Ui.tv(c, "Auto Flow", 15f, Ui.TEXT, true), Ui.lp(0, -2, 1f))
-        vpnChip = Ui.pill(c, "", Ui.CHIP, Ui.SOFT)
-        accChip = Ui.pill(c, "", Ui.CHIP, Ui.SOFT)
-        updated = Ui.tv(c, "", 12f, Ui.MUTED)
-        
-        header.addView(updated, Ui.lp(-2, -2, r = Ui.dp(c, 12)))
-        header.addView(filterChip(c, "↻ Recargar", false) { refresh() }, Ui.lp(-2, -2, r = Ui.dp(c, 8)))
-        header.addView(vpnChip, Ui.lp(-2, -2, r = Ui.dp(c, 8)))
-        header.addView(accChip)
-        root.addView(header)
-
-        root.addView(Ui.tv(c, "¿Qué quieres ver?", 36f, Ui.TEXT, true), Ui.lp(-2, -2, t = Ui.dp(c, 16), b = Ui.dp(c, 12)))
-
-        warn = Ui.tv(c, "", 12f, Ui.RED).apply { visibility = View.GONE }
-        root.addView(warn, Ui.lp(-2, -2, b = Ui.dp(c, 8)))
-        chipsRow = LinearLayout(c)
-        root.addView(chipsRow, Ui.lp(-2, -2, b = Ui.dp(c, 12)))
-
-        // contenido: lista + panel
-        val content = LinearLayout(c)
-        list = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
-        content.addView(ScrollView(c).apply { isFillViewport = true; addView(list) }, Ui.lp(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f, r = Ui.dp(c, 28)))
-        
-        val panel = LinearLayout(c).apply { 
-            orientation = LinearLayout.VERTICAL
-            setPadding(Ui.dp(c, 20), Ui.dp(c, 20), Ui.dp(c, 20), Ui.dp(c, 20))
-            background = Ui.rounded(c, Ui.CARD, 14) 
-        }
-        pTitle = Ui.tv(c, "", 20f, Ui.TEXT, true)
-        pCount = Ui.tv(c, "", 13f, Ui.SOFT)
-        panel.addView(Ui.tv(c, "SELECCIONADO", 11f, Ui.MUTED))
-        panel.addView(pTitle, Ui.lp(-1, -2, t = Ui.dp(c, 10), b = Ui.dp(c, 10)))
-        panel.addView(pCount)
-        panel.addView(android.view.View(c), Ui.lp(1, 0, 1f))
-        panel.addView(Ui.tv(c, "Pulsa OK para ver los enlaces.\nAl elegir uno se conecta la VPN y se abre AceStream.", 12f, Ui.SOFT))
-        content.addView(panel, Ui.lp(Ui.dp(c, 260), ViewGroup.LayoutParams.MATCH_PARENT))
-        root.addView(content, Ui.lp(-1, 0, 1f))
-
-        root.addView(Ui.tv(c, "↑ ↓ Navegar      OK Seleccionar", 11f, Ui.MUTED), Ui.lp(-2, -2, t = Ui.dp(c, 10)))
+        notice = Ui.tv(this, "", 12f, Ui.RED).apply { visibility = View.GONE }
+        root.addView(notice)
+        val body = ScrollView(this).apply { isFillViewport = false; isFocusable = false }
+        val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        chips = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        column.addView(horizontal(chips), Ui.lp(-1, -2, b = Ui.dp(this, 18)))
+        column.addView(Ui.tv(this, "Eventos destacados", 23f, Ui.TEXT, true), Ui.lp(-1, -2, b = Ui.dp(this, 10)))
+        highlights = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        column.addView(horizontal(highlights), Ui.lp(-1, -2, b = Ui.dp(this, 18)))
+        column.addView(Ui.tv(this, "Más eventos", 19f, Ui.TEXT, true), Ui.lp(-1, -2, b = Ui.dp(this, 10)))
+        secondary = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        column.addView(secondary)
+        body.addView(column)
+        root.addView(body, Ui.lp(-1, 0, 1f))
+        val footer = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        footer.addView(Ui.tv(this, "← → Categorías y eventos     OK  Ver enlaces", 11f, Ui.MUTED), Ui.lp(0, -2, 1f))
+        updated = Ui.tv(this, "", 11f, Ui.SOFT)
+        footer.addView(updated)
+        root.addView(footer, Ui.lp(-1, -2, t = Ui.dp(this, 8)))
         setContentView(root)
-
         buildChips()
-        pTitle.text = "Cargando..."
         refresh()
     }
 
-    private fun refresh() {
-        updated.text = "Actualizando…"
-        thread {
-            val r = runCatching { Catalog.load(this) }.getOrNull()
-            runOnUiThread {
-                if (r == null) {
-                    warn.text = "Error leyendo el catálogo (JSON no válido)."; warn.visibility = View.VISIBLE
-                    updated.text = ""; pTitle.text = "Sin contenido"; return@runOnUiThread
-                }
-                Session.items = r.items
-                warn.text = r.warning ?: ""; warn.visibility = if (r.warning == null) View.GONE else View.VISIBLE
-                updated.text = "Actualizado ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())} · ${r.items.size} eventos · ${r.source}"
-                buildList(focusFirst = firstLoad); firstLoad = false
-            }
-        }
+    private fun horizontal(child: LinearLayout) = HorizontalScrollView(this).apply {
+        isHorizontalScrollBarEnabled = false
+        addView(child)
+        descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
     }
 
-    override fun onResume() {
-        super.onResume()
-        val on = FlowService.instance != null
-        accChip.text = if (on) "Accesibilidad · activa" else "Accesibilidad · INACTIVA"
-        accChip.setTextColor(if (on) Ui.GREEN else Ui.RED)
-        accChip.background = Ui.rounded(this, if (on) Ui.GREEN_BG else Ui.CHIP, 999)
-        vpnChip.text = if (FlowService.vpnOk) "VPN · conectada" else "VPN · desconectada"
-        vpnChip.setTextColor(if (FlowService.vpnOk) Ui.GREEN else Ui.SOFT)
+    private fun refresh() {
+        updated.text = "Actualizando catálogo…"
+        thread {
+            val result = runCatching { Catalog.load(this) }
+            runOnUiThread {
+                result.onSuccess { r ->
+                    Session.items = r.items
+                    notice.text = r.warning ?: ""
+                    notice.visibility = if (r.warning.isNullOrBlank()) View.GONE else View.VISIBLE
+                    updated.text = "${r.items.size} eventos · ${r.source} · ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())}"
+                    buildChips()
+                    buildEvents()
+                }.onFailure { e ->
+                    notice.text = "No se pudo leer el catálogo: ${e.message}"
+                    notice.visibility = View.VISIBLE
+                    updated.text = "Error de catálogo"
+                }
+            }
+        }
     }
 
     private fun buildChips() {
-        chipsRow.removeAllViews()
-        listOf("all" to "Todo", "evento" to "Eventos", "pelicula" to "Películas").forEach { (key, label) ->
-            chipsRow.addView(filterChip(this, label, filter == key) {
-                filter = key; buildChips(); buildList(focusFirst = false)
-                chipsRow.getChildAt(listOf("all", "evento", "pelicula").indexOf(key))?.requestFocus()
-            }, Ui.lp(-2, -2, r = Ui.dp(this, 12)))
+        chips.removeAllViews()
+        SportCategory.options.forEach { cat ->
+            val count = if (cat == "Todo") Session.items.size else Session.items.count { SportCategory.of(it) == cat }
+            val icon = when(cat) { "Fútbol" -> "⚽"; "Tenis" -> "●"; "MotoGP" -> "◆"; "Otros" -> "•••"; else -> "▦" }
+            chips.addView(filterChip(this, "$icon  ${if (cat == "Todo") "Todos" else cat}  $count", filter == cat) {
+                filter = cat
+                buildChips()
+                buildEvents()
+                chips.getChildAt(SportCategory.options.indexOf(cat))?.requestFocus()
+            }, Ui.lp(-2, -2, r = Ui.dp(this, 10)))
         }
     }
 
-    private fun buildList(focusFirst: Boolean) {
-        list.removeAllViews()
-        
-        // CORRECCIÓN: Filtra de manera elástica ignorando mayúsculas y minúsculas
-        val shown = Session.items.withIndex().filter { 
-            filter == "all" || it.value.type.lowercase().contains(filter.lowercase()) || it.value.type.isBlank()
+    private fun buildEvents() {
+        highlights.removeAllViews()
+        secondary.removeAllViews()
+        val shown = Session.items.withIndex().filter { filter == "Todo" || SportCategory.of(it.value) == filter }
+        if (shown.isEmpty()) {
+            secondary.addView(Ui.tv(this, "No hay eventos AceStream en esta categoría.", 17f, Ui.SOFT))
+            return
         }
-        
-        if (shown.isEmpty()) { pTitle.text = "Sin contenido"; pCount.text = ""; return }
-        shown.forEachIndexed { n, (idx, item) ->
-            // Aseguramos que si item.type está vacío pinte "EVENTO" por defecto en la caja gris
-            val displayType = if (item.type.isNullOrBlank()) "EVENTO" else item.type.uppercase()
-            
-            val row = FocusRow(this, displayType, item.title, null, item.time) {
-                pTitle.text = item.title
-                pCount.text = "${item.links.size} enlace" + if (item.links.size == 1) "" else "s disponibles"
+        shown.take(5).forEachIndexed { n, indexed ->
+            val (index, item) = indexed
+            val sport = SportCategory.of(item)
+            val drawable = when(sport) {
+                "Fútbol" -> R.drawable.sport_football
+                "Tenis" -> R.drawable.sport_tennis
+                "MotoGP" -> R.drawable.sport_moto
+                else -> if (item.title.contains("india", true) || item.title.contains("cricket", true)) R.drawable.sport_cricket else R.drawable.sport_football
             }
-            row.setOnClickListener { startActivity(Intent(this, LinksActivity::class.java).putExtra("i", idx)) }
-            list.addView(row, Ui.lp(-1, -2, b = Ui.dp(this, 8)))
-            if (n == 0) { 
-                pTitle.text = item.title
-                pCount.text = "${item.links.size} enlaces"
-                if (focusFirst) row.requestFocus() 
+            val card = FrameLayout(this).apply {
+                isFocusable = true
+                isClickable = true
+                background = Ui.rounded(this@MainActivity, Ui.CARD, 14)
+                clipToOutline = true
             }
+            card.addView(ImageView(this).apply {
+                setImageResource(drawable)
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                alpha = 0.82f
+            }, FrameLayout.LayoutParams(-1, -1))
+            card.addView(View(this).apply {
+                background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                    intArrayOf(0x14000000, 0x8806111F.toInt(), 0xFF06111F.toInt()))
+            }, FrameLayout.LayoutParams(-1, -1))
+            val text = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(Ui.dp(this@MainActivity, 12), Ui.dp(this@MainActivity, 8), Ui.dp(this@MainActivity, 12), Ui.dp(this@MainActivity, 12))
+            }
+            text.addView(Ui.tv(this, sport.uppercase(Locale.getDefault()), 10f, 0xFF66CFFF.toInt(), true))
+            text.addView(Ui.tv(this, item.title, 18f, Ui.WHITE, true), Ui.lp(-1, -2, t = Ui.dp(this, 5)))
+            text.addView(Ui.tv(this, "${item.links.size} enlace(s) AceStream${item.time?.takeIf { it.isNotBlank() }?.let { "  ·  $it" } ?: ""}", 11f, Ui.SOFT), Ui.lp(-1, -2, t = Ui.dp(this, 7)))
+            card.addView(text, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+            card.setOnFocusChangeListener { _, focused ->
+                card.foreground = if (focused) Ui.rounded(this, 0x00000000, 14, 0xFF20C9FF.toInt(), 3) else null
+                card.scaleX = if (focused) 1.025f else 1f
+                card.scaleY = if (focused) 1.025f else 1f
+            }
+            card.setOnClickListener { open(index) }
+            highlights.addView(card, Ui.lp(Ui.dp(this, 250), Ui.dp(this, 230), r = Ui.dp(this, 12)))
+            if (n == 0 && firstLoad) { card.requestFocus(); firstLoad = false }
         }
+        shown.drop(5).forEach { (idx, item) ->
+            val row = FocusRow(this, SportCategory.of(item).uppercase(Locale.getDefault()), item.title,
+                "${item.links.size} ▶", item.time?.takeIf { it.isNotBlank() })
+            row.setOnClickListener { open(idx) }
+            secondary.addView(row, Ui.lp(-1, -2, b = Ui.dp(this, 7)))
+        }
+    }
+
+    private fun open(index: Int) {
+        startActivity(Intent(this, LinksActivity::class.java).putExtra("i", index))
     }
 }

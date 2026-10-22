@@ -3,6 +3,9 @@ package com.simo.autoflow
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.net.Uri
+import android.content.Context
+import android.media.AudioManager
+import android.view.KeyEvent
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -14,13 +17,79 @@ class FlowService : AccessibilityService() {
 
     override fun onServiceConnected() { instance = this }
     override fun onUnbind(i: Intent?): Boolean { instance = null; scope.cancel(); return super.onUnbind(i) }
-    override fun onAccessibilityEvent(e: AccessibilityEvent?) {}
+    @Volatile private var awaitingAceStream = false
+    @Volatile private var inAceStream = false
+    @Volatile private var disconnecting = false
+
+    override fun onAccessibilityEvent(e: AccessibilityEvent?) {
+        if (e?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        val pkg = e.packageName?.toString()?.lowercase() ?: return
+        val ace = pkg.contains("acestream") || pkg.contains("aceplayer")
+        if (ace && awaitingAceStream) inAceStream = true
+        // Solo actuar al salir de un reproductor que hemos visto abrir.
+        if (inAceStream && !ace && (pkg == packageName || pkg.contains("launcher") || pkg.contains("firelauncher"))) {
+            inAceStream = false
+            awaitingAceStream = false
+            sendMediaStop()
+            // La conexion VPN fue iniciada por ClaudioTV: intentar desconectar
+            // cuando Ace Stream abandona el primer plano.
+            if (!disconnecting && vpnOk) {
+                val goHome = pkg.contains("launcher")
+                disconnecting = true
+                scope.launch {
+                    try { disconnectRussia(goHome) }
+                    catch (ex: Exception) { Log.w(TAG, "No se pudo desconectar ProtonVPN: ${ex.message}") }
+                    finally { disconnecting = false }
+                }
+            }
+        }
+    }
+
+    fun sendMediaStop() {
+        // Peticion estandar a la sesion multimedia activa; el reproductor puede ignorarla.
+        val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_STOP))
+        audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_STOP))
+    }
+    // Fire TV puede entregar ATRAS al servicio solo si el usuario ha habilitado
+    // el filtrado de teclas para esta accesibilidad. No consumimos la pulsacion:
+    // Ace Stream Media debe poder volver normalmente.
+    override fun onKeyEvent(event: KeyEvent): Boolean {
+        if (inAceStream && event.action == KeyEvent.ACTION_DOWN &&
+            (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_HOME)) {
+            sendMediaStop()
+            Log.i(TAG, "Solicitada parada multimedia al salir de Ace Stream")
+        }
+        return false
+    }
+
+    private suspend fun disconnectRussia(returnHome: Boolean) {
+        launchApp(Config.PROTON_PKG)
+        delay(1300)
+        // Asegurar que el texto corresponde a Proton VPN (no al reproductor).
+        val disconnectTexts = Config.CONNECTED_TEXTS.filter {
+            it.equals("Disconnect", true) || it.equals("Desconectar", true)
+        }
+        val button = waitFor(disconnectTexts, 6500)
+        if (button != null) {
+            click(button)
+            vpnOk = false // Indicador local; confirmar el estado real en Proton VPN
+            Log.i(TAG, "Desconexion VPN solicitada")
+        } else {
+            Log.w(TAG, "No se encontro boton de desconexion de ProtonVPN")
+        }
+        if (returnHome) performGlobalAction(GLOBAL_ACTION_HOME)
+        else launchApp(packageName)
+    }
+
     override fun onInterrupt() {}
 
     fun cancel() { job?.cancel() }
 
     fun runFlow(streamUrl: String) {
         job?.cancel()
+        awaitingAceStream = false
+        inAceStream = false
         for (i in steps.indices) steps[i] = PENDING
         lastError = null; notifyChange()
         job = scope.launch {
@@ -62,6 +131,7 @@ class FlowService : AccessibilityService() {
     }
 
     private suspend fun playStream(url: String) {
+        awaitingAceStream = true
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         // Si Fire TV pregunta con que app abrirlo, elegir AceStream.
         waitFor(listOf("Ace Stream", "AceStream", "Ace Player"), 6000)?.let { click(it) }

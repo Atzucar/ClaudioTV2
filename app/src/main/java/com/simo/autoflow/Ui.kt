@@ -9,15 +9,15 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 object Ui {
-    val BG = 0xFF0E1116.toInt()
-    val CARD = 0xFF171C24.toInt()
-    val CARD2 = 0xFF252C37.toInt()
-    val CHIP = 0xFF1A2029.toInt()
-    val ACCENT = 0xFFE8590C.toInt()
-    val TEXT = 0xFFF2F4F8.toInt()
-    val TEXT2 = 0xFFD5DBE5.toInt()
-    val SOFT = 0xFFA9B3C2.toInt()
-    val MUTED = 0xFF7C8797.toInt()
+    val BG = 0xFF071322.toInt()
+    val CARD = 0xFF10233A.toInt()
+    val CARD2 = 0xFF203954.toInt()
+    val CHIP = 0xFF152940.toInt()
+    val ACCENT = 0xFF007AFF.toInt()
+    val TEXT = 0xFFF5FAFF.toInt()
+    val TEXT2 = 0xFFEAF3FF.toInt()
+    val SOFT = 0xFFC0D3E7.toInt()
+    val MUTED = 0xFF8199B3.toInt()
     val GREEN = 0xFF6FE08D.toInt()
     val GREEN_BG = 0xFF17301F.toInt()
     val RED = 0xFFFF6B6B.toInt()
@@ -68,7 +68,7 @@ class FocusRow(
 
     private fun style(f: Boolean) {
         val c = context
-        background = if (f) Ui.rounded(c, Ui.ACCENT, 12, Ui.WHITE, 2) else Ui.rounded(c, Ui.CARD, 12)
+        background = if (f) Ui.rounded(c, Ui.CARD2, 12, Ui.ACCENT, 2) else Ui.rounded(c, Ui.CARD, 12)
         titleV.setTextColor(if (f) Ui.TEXT else Ui.TEXT2)
         titleV.typeface = if (f) android.graphics.Typeface.DEFAULT_BOLD else android.graphics.Typeface.DEFAULT
         val chipBg = if (f) 0x33FFFFFF else Ui.CARD2
@@ -80,12 +80,12 @@ class FocusRow(
 
 /** Boton tipo "pildora" para filtros. */
 fun filterChip(c: Context, label: String, selected: Boolean, onClick: () -> Unit): TextView =
-    Ui.tv(c, label, 13f, if (selected) Ui.BG else Ui.SOFT, true).apply {
+    Ui.tv(c, label, 13f, if (selected) Ui.WHITE else Ui.SOFT, true).apply {
         isFocusable = true; isClickable = true
         setPadding(Ui.dp(c, 16), Ui.dp(c, 8), Ui.dp(c, 16), Ui.dp(c, 8))
-        background = Ui.rounded(c, if (selected) Ui.WHITE else Ui.CHIP, 999)
+        background = Ui.rounded(c, if (selected) Ui.ACCENT else Ui.CHIP, 999)
         setOnClickListener { onClick() }
         onFocusChangeListener = View.OnFocusChangeListener { v, f ->
-            v.background = Ui.rounded(c, if (selected) Ui.WHITE else Ui.CHIP, 999, if (f) Ui.ACCENT else 0, if (f) 3 else 0)
+            v.background = Ui.rounded(c, if (selected) Ui.ACCENT else Ui.CHIP, 999, if (f) Ui.ACCENT else 0, if (f) 3 else 0)
         }
     }

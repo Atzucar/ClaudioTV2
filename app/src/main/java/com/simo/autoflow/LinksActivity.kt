@@ -16,10 +16,10 @@ class LinksActivity : Activity() {
         val c = this
         val item = Session.items[intent.getIntExtra("i", 0)]
         val root = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Ui.BG); setPadding(Ui.dp(c, 48), Ui.dp(c, 32), Ui.dp(c, 48), Ui.dp(c, 24)) }
-        root.addView(Ui.tv(c, "‹  Atrás · Contenidos", 13f, Ui.SOFT))
+        root.addView(Ui.tv(c, "ClaudioTV   ›   EVENTO   ›   ACESTREAM", 13f, Ui.SOFT))
         root.addView(Ui.tv(c, item.type.uppercase() + (item.time?.let { " · $it" } ?: ""), 11f, Ui.MUTED), Ui.lp(-2, -2, t = Ui.dp(c, 24)))
         root.addView(Ui.tv(c, item.title, 36f, Ui.TEXT, true), Ui.lp(-2, -2, t = Ui.dp(c, 6)))
-        root.addView(Ui.tv(c, "Elige un enlace del evento", 14f, Ui.SOFT), Ui.lp(-2, -2, t = Ui.dp(c, 6), b = Ui.dp(c, 20)))
+        root.addView(Ui.tv(c, "Selecciona una fuente para iniciar la reproducción", 14f, Ui.SOFT), Ui.lp(-2, -2, t = Ui.dp(c, 6), b = Ui.dp(c, 20)))
 
         val list = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
         item.links.forEachIndexed { n, link ->
@@ -40,7 +40,7 @@ class LinksActivity : Activity() {
             if (n == 0) row.requestFocus()
         }
         root.addView(ScrollView(c).apply { addView(list) }, Ui.lp(-1, 0, 1f))
-        root.addView(Ui.tv(c, "↑ ↓ Navegar      OK Abrir enlace      Atrás Volver", 11f, Ui.MUTED), Ui.lp(-2, -2, t = Ui.dp(c, 10)))
+        root.addView(Ui.tv(c, "↑ ↓ Navegar       OK Reproducir       Atrás Volver", 11f, Ui.MUTED), Ui.lp(-2, -2, t = Ui.dp(c, 10)))
         setContentView(root)
     }
 }
