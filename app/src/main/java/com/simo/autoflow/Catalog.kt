@@ -7,7 +7,7 @@ import org.json.JSONTokener
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class Link(val name: String, val url: String, val quality: String?, val peers: Int?)
+data class Link(val name: String, val url: String, val quality: String?, val peers: Int?, val language: String? = null)
 data class Item(val title: String, val type: String, val time: String?, val links: List<Link>, val category: String = "")
 data class CatalogResult(val items: List<Item>, val warning: String?, val source: String)
 
@@ -82,7 +82,8 @@ object Catalog {
                     entry?.optString("name")?.takeIf { it.isNotBlank() } ?: "Canal ${j + 1}",
                     normalized,
                     entry?.optString("quality"),
-                    if (entry?.has("peers") == true) entry.optInt("peers") else null
+                    if (entry?.has("peers") == true) entry.optInt("peers") else null,
+                    entry?.optString("language")?.takeIf { it.isNotBlank() && it != "null" }
                 ))
             }
             if (validLinks.isEmpty()) continue

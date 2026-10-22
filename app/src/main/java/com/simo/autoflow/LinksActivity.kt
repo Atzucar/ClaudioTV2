@@ -23,7 +23,7 @@ class LinksActivity : Activity() {
 
         val list = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
         item.links.forEachIndexed { n, link ->
-            val row = FocusRow(c, "▶", link.name, link.quality, link.peers?.let { "$it pares" })
+            val row = FocusRow(c, "▶", link.name, StreamLanguage.label(link.language), link.quality ?: link.peers?.let { "$it pares" })
             row.setOnClickListener {
                 if (link.url.startsWith("acestream://", true)) {
                     val s = FlowService.instance
