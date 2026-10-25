@@ -16,7 +16,7 @@ object EventTiming {
                 val delta = parsed.time - System.currentTimeMillis()
                 // Round upward: 30m01s is not within 30m, 0m20s displays 1m.
                 return if (delta >= 0) (delta + 59999L) / 60000L else -1L
-            } catch (_: Exception) { }
+            } catch (e: Exception) { }
         }
         return null
     }

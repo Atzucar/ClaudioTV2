@@ -162,7 +162,7 @@ class MainActivity : Activity() {
         }
         shown.drop(5).forEach { (idx, item) ->
             val row = FocusRow(this, SportCategory.of(item).uppercase(Locale.getDefault()), item.title,
-                "${item.links.size} ▶", EventTiming.subtitle(item).ifBlank { item.time ?: "" }
+                "${item.links.size} ▶", EventTiming.subtitle(item).ifBlank { item.time ?: "" })
             row.setOnClickListener { open(idx) }
             secondary.addView(row, Ui.lp(-1, -2, b = Ui.dp(this, 7)))
         }
