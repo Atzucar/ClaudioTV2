@@ -14,7 +14,7 @@ class LinksActivity : Activity() {
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         val c = this
-        val item = Session.items[intent.getIntExtra("i", 0)]
+        val item = Session.items.getOrNull(intent.getIntExtra("i", 0)) ?: run { finish(); return }
         val root = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Ui.BG); setPadding(Ui.dp(c, 48), Ui.dp(c, 32), Ui.dp(c, 48), Ui.dp(c, 24)) }
         root.addView(Ui.tv(c, "ClaudioTV   ›   EVENTO   ›   ACESTREAM", 13f, Ui.SOFT))
         root.addView(Ui.tv(c, item.type.uppercase() + (item.time?.let { " · $it" } ?: ""), 11f, Ui.MUTED), Ui.lp(-2, -2, t = Ui.dp(c, 24)))
@@ -22,6 +22,9 @@ class LinksActivity : Activity() {
         root.addView(Ui.tv(c, "Selecciona una fuente para iniciar la reproducción", 14f, Ui.SOFT), Ui.lp(-2, -2, t = Ui.dp(c, 6), b = Ui.dp(c, 20)))
 
         val list = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
+        if (item.links.isEmpty()) {
+            list.addView(Ui.tv(c, "Próximamente · enlaces aún no disponibles. Pulsa Recargar más tarde.", 17f, Ui.SOFT))
+        }
         item.links.forEachIndexed { n, link ->
             val row = FocusRow(c, "▶", link.name, StreamLanguage.label(link.language), link.quality ?: link.peers?.let { "$it pares" })
             row.setOnClickListener {

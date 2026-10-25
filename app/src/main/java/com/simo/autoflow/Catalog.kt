@@ -8,7 +8,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 data class Link(val name: String, val url: String, val quality: String?, val peers: Int?, val language: String? = null)
-data class Item(val title: String, val type: String, val time: String?, val links: List<Link>, val category: String = "")
+data class Item(val title: String, val type: String, val time: String?, val links: List<Link>, val category: String = "", val competition: String = "", val startAt: String? = null, val status: String = "")
 data class CatalogResult(val items: List<Item>, val warning: String?, val source: String)
 
 object Catalog {
@@ -86,8 +86,12 @@ object Catalog {
                     entry?.optString("language")?.takeIf { it.isNotBlank() && it != "null" }
                 ))
             }
-            if (validLinks.isEmpty()) continue
-            result.add(Item(title, "evento", event.optString("time"), validLinks, event.optString("category", "")))
+            val startAt = event.optString("start_at").takeIf { it.isNotBlank() && it != "null" }
+            val nextThirty = EventTiming.isUpcoming(startAt)
+            if (validLinks.isEmpty() && !nextThirty) continue
+            result.add(Item(title, "evento", event.optString("time"), validLinks,
+                event.optString("category", ""), event.optString("competition", ""), startAt,
+                event.optString("status", "")))
         }
         return result
     }

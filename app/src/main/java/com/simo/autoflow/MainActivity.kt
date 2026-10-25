@@ -125,12 +125,7 @@ class MainActivity : Activity() {
         shown.take(5).forEachIndexed { n, indexed ->
             val (index, item) = indexed
             val sport = SportCategory.of(item)
-            val drawable = when(sport) {
-                "Fútbol" -> R.drawable.sport_football
-                "Tenis" -> R.drawable.sport_tennis
-                "MotoGP" -> R.drawable.sport_moto
-                else -> if (item.title.contains("india", true) || item.title.contains("cricket", true)) R.drawable.sport_cricket else R.drawable.sport_football
-            }
+            val drawable = EventArtwork.drawable(item, sport)
             val card = FrameLayout(this).apply {
                 isFocusable = true
                 isClickable = true
@@ -150,9 +145,11 @@ class MainActivity : Activity() {
                 orientation = LinearLayout.VERTICAL
                 setPadding(Ui.dp(this@MainActivity, 12), Ui.dp(this@MainActivity, 8), Ui.dp(this@MainActivity, 12), Ui.dp(this@MainActivity, 12))
             }
-            text.addView(Ui.tv(this, sport.uppercase(Locale.getDefault()), 10f, 0xFF66CFFF.toInt(), true))
+            text.addView(Ui.tv(this, (item.competition.ifBlank { sport }).uppercase(Locale.getDefault()), 10f, 0xFF66CFFF.toInt(), true))
             text.addView(Ui.tv(this, item.title, 18f, Ui.WHITE, true), Ui.lp(-1, -2, t = Ui.dp(this, 5)))
-            text.addView(Ui.tv(this, "${item.links.size} enlace(s) AceStream${item.time?.takeIf { it.isNotBlank() }?.let { "  ·  $it" } ?: ""}", 11f, Ui.SOFT), Ui.lp(-1, -2, t = Ui.dp(this, 7)))
+            val count = if (item.links.isEmpty()) "Sin enlaces todavía" else "${item.links.size} enlace(s) AceStream"
+            val timing = EventTiming.subtitle(item)
+            text.addView(Ui.tv(this, "$count${if (timing.isNotEmpty()) " · $timing" else ""}", 11f, Ui.SOFT), Ui.lp(-1, -2, t = Ui.dp(this, 7)))
             card.addView(text, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
             card.setOnFocusChangeListener { _, focused ->
                 card.foreground = if (focused) Ui.rounded(this, 0x00000000, 14, 0xFF20C9FF.toInt(), 3) else null
@@ -165,7 +162,7 @@ class MainActivity : Activity() {
         }
         shown.drop(5).forEach { (idx, item) ->
             val row = FocusRow(this, SportCategory.of(item).uppercase(Locale.getDefault()), item.title,
-                "${item.links.size} ▶", item.time?.takeIf { it.isNotBlank() })
+                "${item.links.size} ▶", EventTiming.subtitle(item).ifBlank { item.time ?: "" }
             row.setOnClickListener { open(idx) }
             secondary.addView(row, Ui.lp(-1, -2, b = Ui.dp(this, 7)))
         }
