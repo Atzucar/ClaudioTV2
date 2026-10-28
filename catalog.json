@@ -1,7 +1,7 @@
 [
   {
-    "id": "537366013",
-    "title": "Nueva York – Detroit",
+    "id": "598516891",
+    "title": "Campeonato Mundial, Kazajistán",
     "type": "evento",
     "time": "",
     "start_at": null,
@@ -10,24 +10,7 @@
     "links": [
       {
         "name": "AceStream 1",
-        "url": "acestream://98f7c6627892ba874bd175ef1f9e67199c7e11af",
-        "quality": null,
-        "language": null
-      }
-    ]
-  },
-  {
-    "id": "569389631",
-    "title": "Tampa Bay – Milwaukee",
-    "type": "evento",
-    "time": "",
-    "start_at": null,
-    "status": "available",
-    "competition": "",
-    "links": [
-      {
-        "name": "AceStream 1",
-        "url": "acestream://efc60cfe5e3a349baa02bcc49f6647c21a9c3c5b",
+        "url": "acestream://822654b2c0db24d1de149cb21fdd44a3b968fbfa",
         "quality": null,
         "language": null
       }
