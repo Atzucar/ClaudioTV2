@@ -24,11 +24,14 @@ object EventArtwork {
             has(meta, "voleibol", "volleyball", "voley", "vóley") -> R.drawable.sport_volley
             // Futbol por competicion
             has(meta, "champions") -> R.drawable.bg_champions
-            has(meta, "europa league", "conference league") -> R.drawable.bg_europa
+            has(meta, "conference league") -> R.drawable.bg_conference
+            has(meta, "europa league", "liga europa") -> R.drawable.bg_europa
             has(meta, "serie a", "italia", "coppa italia") -> R.drawable.bg_serie_a
             has(meta, "laliga", "la liga", "primera división", "españa", "copa del rey") -> R.drawable.bg_laliga
             has(meta, "premier league", "inglaterra", "fa cup") -> R.drawable.bg_premier
             has(meta, "bundesliga", "alemania", "dfb") -> R.drawable.bg_bundesliga
+            has(meta, "ligue 1", "francia", "liga francesa") -> R.drawable.bg_ligue1
+            has(meta, "liga portugal", "primeira liga", "portugal", "liga portuguesa") -> R.drawable.bg_portugal
             sport == "Fútbol" || has(meta, "fútbol", "futbol", "football", "soccer") -> R.drawable.sport_football
             else -> R.drawable.sport_generic
         }

@@ -85,7 +85,8 @@ def competition_from_context(text):
         ('LaLiga', ('laliga', 'la liga', 'primera división española')),
         ('Premier League', ('premier league',)),
         ('Bundesliga', ('bundesliga',)),
-        ('Ligue 1', ('ligue 1',)),
+        ('Ligue 1', ('ligue 1', 'liga francesa')),
+        ('Liga Portugal', ('liga portugal', 'primeira liga', 'liga portuguesa')),
         ('MotoGP', ('motogp', 'moto gp')),
         ('Tenis', ('tennis', 'tenis', 'atp ', 'wta ')),
     ]
