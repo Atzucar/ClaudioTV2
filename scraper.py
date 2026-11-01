@@ -94,6 +94,16 @@ def competition_from_context(text):
     return ''
 
 
+def sport_from_context(text):
+    t = clean(text).lower()
+    if any(w in t for w in ('fútbol', 'futbol', 'football', 'soccer', 'serie a', 'laliga', 'premier league', 'bundesliga')): return 'Fútbol'
+    if any(w in t for w in ('tenis', 'tennis', 'atp', 'wta')): return 'Tenis'
+    if any(w in t for w in ('motogp', 'moto gp', 'motociclismo')): return 'MotoGP'
+    if any(w in t for w in ('cricket', 'críquet')): return 'Cricket'
+    if any(w in t for w in ('baloncesto', 'basketball', 'euroliga', 'nba')): return 'Baloncesto'
+    if any(w in t for w in ('hockey', 'nhl')): return 'Hockey'
+    return 'Otros'
+
 def find_events(source, base):
     soup = BeautifulSoup(source, 'html.parser')
     found, seen = [], set()
@@ -108,11 +118,16 @@ def find_events(source, base):
         if not title: continue
         seen.add(match.group(1))
         clock = row.select_one('.evtime') if row else None
+        # La portada muestra la competicion principalmente en el alt/title de
+        # una imagen junto al evento, no necesariamente en el titulo del link.
+        image_hints = ' '.join(clean(img.get(k, '')) for img in (row.select('img') if row else []) for k in ('alt', 'title'))
         context = clean(row.get_text(' ', strip=True)) if row else title
+        meta = clean(image_hints + ' ' + context)
         found.append({'id': match.group(1), 'title': title,
                       'time': clean(clock.get_text(' ', strip=True)) if clock else '',
                       'start_at': parse_start(a, row),
-                      'competition': competition_from_context(context),
+                      'competition': competition_from_context(meta),
+                      'category': sport_from_context(meta),
                       'event_url': url})
     return found
 
@@ -173,7 +188,7 @@ def build_catalog(base_url, max_events):
         print(f'Eventos encontrados: {len(events)}')
         out = []
         now = datetime.now(timezone.utc)
-        for event in events[:max_events]:
+        for event in (events if max_events <= 0 else events[:max_events]):
             start_raw = event.get('start_at')
             starts = datetime.fromisoformat(start_raw) if start_raw else None
             minutes = (starts - now).total_seconds() / 60 if starts else None
@@ -182,13 +197,13 @@ def build_catalog(base_url, max_events):
                 response = session.get(event['event_url'], timeout=20)
                 response.raise_for_status()
                 links = find_links(response.text)
-                # Include upcoming events without streams, but ONLY with a reliable timestamp.
-                if links or upcoming:
+                # Mostrar el listado completo, incluso sin enlaces AceStream.
+                if True:
                     competition = event['competition']
                     out.append({'id': event['id'], 'title': event['title'], 'type': 'evento',
                                 'time': event['time'], 'start_at': start_raw,
-                                'status': 'upcoming' if upcoming else 'available',
-                                'competition': competition, 'links': links})
+                                'status': 'upcoming' if upcoming else ('available' if links else 'no_links'),
+                                'competition': competition, 'category': event['category'], 'links': links})
                     print(f"{event['title']}: {len(links)} enlaces AceStream" + (' (próximo)' if upcoming else ''))
             except requests.RequestException as exc:
                 print(f"Error en {event['title']}: {exc}")
@@ -199,7 +214,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--base-url', default=BASE_URL)
     parser.add_argument('--output', default='catalog.json')
-    parser.add_argument('--max-events', '--limit', type=int, default=100)
+    parser.add_argument('--max-events', '--limit', type=int, default=0, help='0 = sin limite')
     args = parser.parse_args()
     events = build_catalog(args.base_url, args.max_events)
     if not events:

@@ -88,7 +88,6 @@ object Catalog {
             }
             val startAt = event.optString("start_at").takeIf { it.isNotBlank() && it != "null" }
             val nextThirty = EventTiming.isUpcoming(startAt)
-            if (validLinks.isEmpty() && !nextThirty) continue
             result.add(Item(title, "evento", event.optString("time"), validLinks,
                 event.optString("category", ""), event.optString("competition", ""), startAt,
                 event.optString("status", "")))

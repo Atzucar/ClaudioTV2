@@ -1,0 +1,9 @@
+CORRECCION V3 - 2026-11-01
+- El scraper analiza la portada /es/ sin limitar a 100 eventos (max-events 0).
+- Guarda tambien eventos sin AceStream, con links vacios y status no_links.
+- Extrae deporte/competicion desde el alt/title de imagenes proximas al enlace cuando existen.
+- El selector de fondos usa competicion, categoria y titulo, sin usar Champions para otros deportes.
+- Catalog.kt no elimina los eventos sin enlaces; LinksActivity muestra sin enlaces todavia.
+- Mantiene FlowService, integracion con Proton VPN y logica de salida previa SIN garantia de cierre con Home.
+- Requiere volver a ejecutar update-catalog.yml y generar un APK nuevo.
+- Sin test de scrapeo vivo ni de APK/Fire TV; validar despues de compilar.
