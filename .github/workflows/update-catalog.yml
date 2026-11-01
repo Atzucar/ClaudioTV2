@@ -19,7 +19,7 @@ jobs:
       - name: Instalar dependencias
         run: python -m pip install requests beautifulsoup4
       - name: Actualizar catalogo
-        run: python scraper.py --base-url https://livetv.sx --output catalog.json --max-events 100
+        run: python scraper.py --base-url https://livetv.sx --output catalog.json --max-events 0
       - name: Validar archivo
         run: |
           python - <<'PY2'
