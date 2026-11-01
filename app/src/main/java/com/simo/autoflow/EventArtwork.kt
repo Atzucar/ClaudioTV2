@@ -2,23 +2,35 @@ package com.simo.autoflow
 
 import java.util.Locale
 
+/** Elige el fondo de la tarjeta segun competicion, categoria y titulo del evento. */
 object EventArtwork {
+    private fun has(text: String, vararg terms: String) = terms.any { it in text }
+
     fun drawable(item: Item, sport: String): Int {
         val competition = item.competition.lowercase(Locale.ROOT)
+        val category = item.category.lowercase(Locale.ROOT)
         val title = item.title.lowercase(Locale.ROOT)
-        val meta = "$competition $title"
+        val meta = " $competition $category $title "
         return when {
-            "motogp" in meta || sport == "MotoGP" -> R.drawable.sport_moto
-            sport == "Tenis" || "atp" in meta || "wta" in meta -> R.drawable.sport_tennis
-            "cricket" in meta || "críquet" in meta || item.category.equals("Cricket", true) -> R.drawable.sport_cricket
-            sport != "Fútbol" && !item.category.equals("Fútbol", true) -> R.drawable.sport_football
-            "europa league" in meta || "conference league" in meta -> R.drawable.bg_europa
-            "champions" in competition || "champions league" in title -> R.drawable.bg_champions
-            "serie a" in meta || "italia" in competition -> R.drawable.bg_serie_a
-            "laliga" in meta || "la liga" in meta || "españa" in competition -> R.drawable.bg_laliga
-            "premier league" in meta || "inglaterra" in competition -> R.drawable.bg_premier
-            "bundesliga" in meta || "alemania" in competition -> R.drawable.bg_bundesliga
-            else -> R.drawable.sport_football
+            // Motor
+            has(meta, "motogp", "moto gp", "motociclismo", "moto2", "moto3", "superbike") || sport == "MotoGP" -> R.drawable.sport_moto
+            has(meta, "fórmula 1", "formula 1", " f1 ", "gran premio", "grand prix", " gp ", "automovilismo",
+                " f2 ", " f3 ", " f4 ", "nascar", "indycar", "rally", "wec ", "le mans", "dtm") -> R.drawable.sport_f1
+            // Otros deportes
+            sport == "Tenis" || has(meta, "tenis", "tennis", " atp", " wta", "wimbledon", "roland garros") -> R.drawable.sport_tennis
+            has(meta, "cricket", "críquet") -> R.drawable.sport_cricket
+            has(meta, "baloncesto", "basketball", " nba", "euroliga", "euroleague", "acb", "eurocup") -> R.drawable.sport_basket
+            has(meta, "hockey", " nhl", " khl") -> R.drawable.sport_hockey
+            has(meta, "voleibol", "volleyball", "voley", "vóley") -> R.drawable.sport_volley
+            // Futbol por competicion
+            has(meta, "champions") -> R.drawable.bg_champions
+            has(meta, "europa league", "conference league") -> R.drawable.bg_europa
+            has(meta, "serie a", "italia", "coppa italia") -> R.drawable.bg_serie_a
+            has(meta, "laliga", "la liga", "primera división", "españa", "copa del rey") -> R.drawable.bg_laliga
+            has(meta, "premier league", "inglaterra", "fa cup") -> R.drawable.bg_premier
+            has(meta, "bundesliga", "alemania", "dfb") -> R.drawable.bg_bundesliga
+            sport == "Fútbol" || has(meta, "fútbol", "futbol", "football", "soccer") -> R.drawable.sport_football
+            else -> R.drawable.sport_generic
         }
     }
 }

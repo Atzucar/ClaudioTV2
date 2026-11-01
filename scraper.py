@@ -102,6 +102,8 @@ def sport_from_context(text):
     if any(w in t for w in ('cricket', 'críquet')): return 'Cricket'
     if any(w in t for w in ('baloncesto', 'basketball', 'euroliga', 'nba')): return 'Baloncesto'
     if any(w in t for w in ('hockey', 'nhl')): return 'Hockey'
+    if any(w in t for w in ('fórmula 1', 'formula 1', 'f1 ', 'gran premio', 'grand prix', 'automovilismo', 'nascar', 'indycar', 'rally')): return 'Automovilismo'
+    if any(w in t for w in ('voleibol', 'volleyball', 'voley', 'vóley')): return 'Voleibol'
     return 'Otros'
 
 def find_events(source, base):
