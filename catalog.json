@@ -329,17 +329,10 @@
     "type": "evento",
     "time": "",
     "start_at": null,
-    "status": "available",
+    "status": "no_links",
     "competition": "",
     "category": "Fútbol",
-    "links": [
-      {
-        "name": "AceStream 1",
-        "url": "acestream://fc5089d8e1519872fdf951779ccbca913acc9bce",
-        "quality": null,
-        "language": null
-      }
-    ]
+    "links": []
   },
   {
     "id": "620293224",
@@ -549,7 +542,7 @@
     "start_at": null,
     "status": "no_links",
     "competition": "",
-    "category": "Otros",
+    "category": "Voleibol",
     "links": []
   },
   {
@@ -615,7 +608,7 @@
     "start_at": null,
     "status": "no_links",
     "competition": "",
-    "category": "Otros",
+    "category": "Voleibol",
     "links": []
   },
   {
@@ -681,7 +674,7 @@
     "start_at": null,
     "status": "no_links",
     "competition": "",
-    "category": "Otros",
+    "category": "Automovilismo",
     "links": []
   },
   {
@@ -998,7 +991,7 @@
     "start_at": null,
     "status": "no_links",
     "competition": "",
-    "category": "Otros",
+    "category": "Voleibol",
     "links": []
   },
   {
@@ -1115,7 +1108,7 @@
     "start_at": null,
     "status": "no_links",
     "competition": "",
-    "category": "Otros",
+    "category": "Voleibol",
     "links": []
   },
   {
@@ -1236,7 +1229,7 @@
     "start_at": null,
     "status": "no_links",
     "competition": "",
-    "category": "Otros",
+    "category": "Voleibol",
     "links": []
   },
   {
